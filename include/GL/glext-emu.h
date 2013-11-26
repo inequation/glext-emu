@@ -27,12 +27,17 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef __gl_h_
-	#error Please include gl.h before glext-emu.h
+#if !defined(__gl_h_) && !defined(__GL_H__) && !defined(__X_GL_H)
+	#error Please include gl.h (or your OpenGL extension manager's header, such as GLEW) before glext-emu.h
+#endif
+#if !defined(__glext_h_) && !defined(__GLEXT_H_)
+	#error Please include glext.h (or your OpenGL extension manager's header, such as GLEW) before glext-emu.h
 #endif
 
+// Reverse header guard: preprocess everything out unless the proper glext-emu
+// part is explicitly and exclusively requested.
 #if defined(GLEXTEMU_PROTOTYPES) || defined(GLEXTEMU_DEFINITIONS) || defined(GLEXTEMU_PATCH)
-#define __glext-emu_h_ 1
+#define __glext_emu_h_ 1
 
 // This header is meant to be re-included for each of the use cases: exporting
 // function prototypes, definitions or patch commands. Only one define should be
@@ -50,11 +55,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #if defined(GLEXTEMU_DEFINITIONS)
 	// Function definitions use a set of macros to control state caching.
 	
-	// The GLEXTEMU_DECLARE_CACHE macro is used at the beginning of every
+	// The GLEXTEMU_DECLARE_CACHED macro is used at the beginning of every
 	// function to declare state parameters that it needs caching for. The
 	// default is to use no caching.
-	#ifndef GLEXTEMU_DECLARE_CACHE
-		#define GLEXTEMU_DECLARE_CACHE(type, param, default)
+	#ifndef GLEXTEMU_DECLARE_CACHED
+		#define GLEXTEMU_DECLARE_CACHED(type, param, default)
 	#endif
 
 	// The GLEXTEMU_COMPARE_CACHED macro is used to compare the cached value
@@ -85,7 +90,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	// A client application may enforce patching even of supported extensions by
 	// defining GLEXTEMU_FORCE_PATCHING to a non-zero value. This can be useful
 	// for debugging purposes. The default is 0 (only patch NULL entry points).
-	#define GLEXTEMU_FORCE_PATCHING	0
+	#ifndef GLEXTEMU_FORCE_PATCHING
+		#define GLEXTEMU_FORCE_PATCHING	0
+	#endif
 
 	// A client application may use a custom prefix for its OpenGL command entry
 	// point pointers (such as qgl in the id Tech game engines). Define
@@ -107,18 +114,32 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	#endif
 #endif
 
+// Internal helper macros to make sure commands get their prefix
+#define _GLEXTEMU_CONCAT2(a, b)			a ## b
+#define _GLEXTEMU_CONCAT(a, b)			_GLEXTEMU_CONCAT2(a, b)
+#define _GLEXTEMU_PREFIXED(command)		_GLEXTEMU_CONCAT(GLEXTEMU_PREFIX, command)
+#define _GLEXTEMU_PFN_PREFIXED(command)	_GLEXTEMU_CONCAT(GLEXTEMU_PFN_PREFIX, command)
+
 // Internal definitions of per-command macros.
 #if defined(GLEXTEMU_DEFINITIONS)
-	#define _GLEXTEMU_CMD(returnType, command, args, code)		\
+	#define _GLEXTEMU_CMD(returnType, command, args, code)				\
 		returnType GLEXTEMU_PREFIX ## command args code
 #elif defined(GLEXTEMU_PROTOTYPES)
-	#define _GLEXTEMU_CMD(returnType, command, args, code)		\
-		GLEXTEMU_API returnType GLEXTEMU_PREFIX ## command args;
+	#define _GLEXTEMU_CMD(returnType, command, args, code)				\
+		GLEXTEMU_API returnType _GLEXTEMU_PREFIXED(command) args;
 #elif defined(GLEXTEMU_PATCH)
-	#define _GLEXTEMU_CMD(returnType, command, args, code)		\
-		if (GLEXTEMU_FORCE_PATCHING								\
-			|| GLEXTEMU_PFN_PREFIX ## command == 0)				\
-			GLEXTEMU_PFN_PREFIX ## command = & GLEXTEMU_PREFIX ## command;
+	#define _GLEXTEMU_CMD(returnType, command, args, code)				\
+		if (GLEXTEMU_FORCE_PATCHING										\
+			|| _GLEXTEMU_PFN_PREFIXED(command) == 0)					\
+			_GLEXTEMU_PFN_PREFIXED(command) = & _GLEXTEMU_PREFIXED(command);
+#endif
+
+// Workaround for GLEW declaring bad types for some instances of internal format
+// arguments.
+#if defined(__glew_h__) || defined(__GLEW_H__)
+	#define GLifmt	GLint
+#else
+	#define GLifmt	GLenum
 #endif
 
 // Per-extension command includes.
@@ -129,6 +150,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	#endif
 #endif
 
+// Clean up namespace.
+#undef _GLEXTEMU_CMD
+#undef _GLEXTEMU_PFN_PREFIXED
+#undef _GLEXTEMU_PREFIXED
+#undef _GLEXTEMU_CONCAT
+#undef _GLEXTEMU_CONCAT2
+
 // Warn if this header is included but no extensions are to be emulated.
 // Someone probably made a typo in the extension name.
 #if _GLEXTEMU_USED
@@ -137,5 +165,5 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	#warning glext-emu.h is included, but no extension was chosen to emulate - check GLEXTEMU_* defines for typos
 #endif
 
-#undef __glext-emu_h_
+#undef __glext_emu_h_
 #endif // defined(GLEXTEMU_PROTOTYPES) || defined(GLEXTEMU_DEFINITIONS) || defined(GLEXTEMU_PATCH)
