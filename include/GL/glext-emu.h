@@ -51,10 +51,110 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	#error Please define GLEXTEMU_PREFIX
 #endif
 
+// A client application may use a custom prefix for its OpenGL command entry
+// point pointers (such as qgl in the id Tech game engines). Define
+// GLEXTEMU_PFN_PREFIX if your entry points are named in such non-standard
+// way. The default is gl for standard OpenGL symbols.
+#ifndef GLEXTEMU_PFN_PREFIX
+	#define GLEXTEMU_PFN_PREFIX	gl
+#endif
+
 // Per-use-case configuration follows.
 #if defined(GLEXTEMU_DEFINITIONS)
-	// Function definitions use a set of macros to control state caching.
+	// Function definitions use a set of macros to control backing-up the state.
+
+	// The GLEXTEMU_PUSH_* macro family is used to back up the current value of
+	// a given state parameter. A custom definition can be used to implement
+	// cached switching instead. The default is to use the glGet*() function
+	// family to store the current value in a local variable.
+	#ifndef GLEXTEMU_PUSH_MATRIX_MODE
+		#define GLEXTEMU_PUSH_MATRIX_MODE(newValue)							\
+			_GLEXTEMU_PUSH_BINDING(GL_MATRIX_MODE);
+	#endif
+	#ifndef GLEXTEMU_PUSH_TEXTURE
+		#define GLEXTEMU_PUSH_TEXTURE(target, newValue)						\
+			_GLEXTEMU_TEXTURE_TO_BINDING(target)							\
+			_GLEXTEMU_PUSH_BINDING(bindingParam)
+	#endif
+	#ifndef GLEXTEMU_PUSH_ACTIVE_TEXTURE
+		#define GLEXTEMU_PUSH_ACTIVE_TEXTURE(newValue)						\
+			_GLEXTEMU_PUSH_BINDING(GL_ACTIVE_TEXTURE)
+	#endif
+	#ifndef GLEXTEMU_PUSH_CLIENT_ACTIVE_TEXTURE
+		#define GLEXTEMU_PUSH_CLIENT_ACTIVE_TEXTURE(newValue)				\
+			_GLEXTEMU_PUSH_BINDING(GL_CLIENT_ACTIVE_TEXTURE);
+	#endif
+	#ifndef GLEXTEMU_PUSH_BUFFER
+		#define GLEXTEMU_PUSH_BUFFER(newValue)								\
+			_GLEXTEMU_PUSH_BINDING(GL_ARRAY_BUFFER_BINDING);
+	#endif
+	#ifndef GLEXTEMU_PUSH_PROGRAM
+		#define GLEXTEMU_PUSH_PROGRAM(newValue)								\
+			_GLEXTEMU_PUSH_BINDING(GL_CURRENT_PROGRAM);
+	#endif
+	#ifndef GLEXTEMU_PUSH_RENDERBUFFER
+		#define GLEXTEMU_PUSH_RENDERBUFFER(newValue)						\
+			_GLEXTEMU_PUSH_BINDING(GL_RENDERBUFFER_BINDING);
+	#endif
+	#ifndef GLEXTEMU_PUSH_FRAMEBUFFER
+		#define GLEXTEMU_PUSH_FRAMEBUFFER(newValue)							\
+			_GLEXTEMU_PUSH_BINDING(GL_DRAW_FRAMEBUFFER_BINDING);
+	#endif
+	#ifndef GLEXTEMU_PUSH_BUFFER_COPY
+		#define GLEXTEMU_PUSH_BUFFER_COPY(newValueRead, newValueWrite)		\
+			_GLEXTEMU_PUSH_BINDING(GL_COPY_READ_BUFFER_BINDING);			\
+			_GLEXTEMU_PUSH_BINDING(GL_COPY_WRITE_BUFFER_BINDING);
+	#endif
+	#ifndef GLEXTEMU_PUSH_VERTEX_ARRAY
+		#define GLEXTEMU_PUSH_VERTEX_ARRAY(vaobj)							\
+			_GLEXTEMU_PUSH_BINDING(GL_VERTEX_ARRAY_BINDING);
+	#endif
 	
+	// The GLEXTEMU_POP_* macro family is used to restore the original value of
+	// a given state parameter from backup. The default is to call the proper
+	// bind function for the given parameter with the backed-up value.
+	#ifndef GLEXTEMU_POP_MATRIX_MODE
+		#define GLEXTEMU_POP_MATRIX_MODE									\
+			_GLEXTEMU_PFN_PREFIXED(MatrixMode)(orig_GL_MATRIX_MODE);
+	#endif
+	#ifndef GLEXTEMU_POP_TEXTURE
+		#define GLEXTEMU_POP_TEXTURE(target)								\
+			_GLEXTEMU_PFN_PREFIXED(BindTexture)(target, orig_bindingParam);
+	#endif
+	#ifndef GLEXTEMU_POP_ACTIVE_TEXTURE
+		#define GLEXTEMU_POP_ACTIVE_TEXTURE									\
+			_GLEXTEMU_PFN_PREFIXED(ActiveTexture)(orig_GL_ACTIVE_TEXTURE);
+	#endif
+	#ifndef GLEXTEMU_POP_CLIENT_ACTIVE_TEXTURE
+		#define GLEXTEMU_POP_CLIENT_ACTIVE_TEXTURE							\
+			_GLEXTEMU_PFN_PREFIXED(ClientActiveTexture)(orig_GL_CLIENT_ACTIVE_TEXTURE);
+	#endif
+	#ifndef GLEXTEMU_POP_BUFFER
+		#define GLEXTEMU_POP_BUFFER											\
+			_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_ARRAY_BUFFER, orig_GL_ARRAY_BUFFER_BINDING);
+	#endif
+	#ifndef GLEXTEMU_POP_PROGRAM
+		#define GLEXTEMU_POP_PROGRAM										\
+			_GLEXTEMU_PFN_PREFIXED(UseProgram)(orig_GL_CURRENT_PROGRAM);
+	#endif
+	#ifndef GLEXTEMU_POP_RENDERBUFFER
+		#define GLEXTEMU_POP_RENDERBUFFER									\
+			_GLEXTEMU_PFN_PREFIXED(BindRenderbuffer)(GL_RENDERBUFFER, orig_GL_RENDERBUFFER_BINDING);
+	#endif
+	#ifndef GLEXTEMU_POP_FRAMEBUFFER
+		#define GLEXTEMU_POP_FRAMEBUFFER									\
+			_GLEXTEMU_PFN_PREFIXED(BindRenderbuffer)(GL_RENDERBUFFER, orig_GL_DRAW_FRAMEBUFFER_BINDING);
+	#endif
+	#ifndef GLEXTEMU_POP_BUFFER_COPY
+		#define GLEXTEMU_POP_BUFFER_COPY									\
+			_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_COPY_READ_BUFFER, orig_GL_COPY_READ_BUFFER_BINDING); 	\
+			_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_COPY_WRITE_BUFFER, orig_GL_COPY_WRITE_BUFFER_BINDING);
+	#endif
+	#ifndef GLEXTEMU_POP_VERTEX_ARRAY
+		#define GLEXTEMU_POP_VERTEX_ARRAY									\
+			_GLEXTEMU_PFN_PREFIXED(BindVertexArray)(orig_GL_VERTEX_ARRAY_BINDING);
+	#endif
+		
 	// The GLEXTEMU_DECLARE_CACHED macro is used at the beginning of every
 	// function to declare state parameters that it needs caching for. The
 	// default is to use no caching.
@@ -93,14 +193,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	#ifndef GLEXTEMU_FORCE_PATCHING
 		#define GLEXTEMU_FORCE_PATCHING	0
 	#endif
-
-	// A client application may use a custom prefix for its OpenGL command entry
-	// point pointers (such as qgl in the id Tech game engines). Define
-	// GLEXTEMU_PFN_PREFIX if your entry points are named in such non-standard
-	// way. The default is gl for standard OpenGL symbols.
-	#ifndef GLEXTEMU_PFN_PREFIX
-		#define GLEXTEMU_PFN_PREFIX	gl
-	#endif
 #endif
 
 // The GLEXTEMU_API is a general-purpose function prefix added to function
@@ -120,10 +212,39 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define _GLEXTEMU_PREFIXED(command)		_GLEXTEMU_CONCAT(GLEXTEMU_PREFIX, command)
 #define _GLEXTEMU_PFN_PREFIXED(command)	_GLEXTEMU_CONCAT(GLEXTEMU_PFN_PREFIX, command)
 
+// Internal helper macro to facilitate backing up of OpenGL state parameters.
+#define _GLEXTEMU_PUSH_BINDING(binding)										\
+	GLint orig_ ## binding;													\
+	_GLEXTEMU_PFN_PREFIXED(GetIntegerv)(binding, &orig_ ## binding);
+
+// Internal helper macro to convert from a texture target token to a binding.
+#define _GLEXTEMU_TEXTURE_TO_BINDING(target)								\
+	GLenum bindingParam = GL_TEXTURE_BINDING_2D;							\
+	switch (target)															\
+	{																		\
+		case GL_TEXTURE_1D:	bindingParam = GL_TEXTURE_BINDING_1D;	break;	\
+		case GL_TEXTURE_2D:	bindingParam = GL_TEXTURE_BINDING_2D;	break;	\
+		case GL_TEXTURE_3D:	bindingParam = GL_TEXTURE_BINDING_3D;	break;	\
+		case GL_TEXTURE_CUBE_MAP:											\
+			bindingParam = GL_TEXTURE_BINDING_CUBE_MAP;				break;	\
+		case GL_TEXTURE_1D_ARRAY:											\
+			bindingParam = GL_TEXTURE_BINDING_1D_ARRAY;				break;	\
+		case GL_TEXTURE_2D_ARRAY:											\
+			bindingParam = GL_TEXTURE_BINDING_2D_ARRAY;				break;	\
+		case GL_TEXTURE_BUFFER:												\
+			bindingParam = GL_TEXTURE_BINDING_BUFFER;				break;	\
+		case GL_TEXTURE_RECTANGLE:											\
+			bindingParam = GL_TEXTURE_BINDING_RECTANGLE;			break;	\
+		case GL_TEXTURE_2D_MULTISAMPLE:										\
+			bindingParam = GL_TEXTURE_BINDING_2D_MULTISAMPLE;		break;	\
+		case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:								\
+			bindingParam = GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY;	break;	\
+	}
+
 // Internal definitions of per-command macros.
 #if defined(GLEXTEMU_DEFINITIONS)
 	#define _GLEXTEMU_CMD(returnType, command, args, code)				\
-		returnType GLEXTEMU_PREFIX ## command args code
+		returnType _GLEXTEMU_PREFIXED(command) args code
 #elif defined(GLEXTEMU_PROTOTYPES)
 	#define _GLEXTEMU_CMD(returnType, command, args, code)				\
 		GLEXTEMU_API returnType _GLEXTEMU_PREFIXED(command) args;
@@ -142,6 +263,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	#define GLifmt	GLenum
 #endif
 
+// Temporary placeholder until I figure out how to raise GL errors. :)
+#define _GLEXTEMU_RAISE_INVALID_ENUM
+#define _GLEXTEMU_RAISE_INVALID_VALUE
+#define _GLEXTEMU_RAISE_INVALID_OPERATION
+#define _GLEXTEMU_RAISE_INVALID_FRAMEBUFFER_OPERATION
+
 // Per-extension command includes.
 #ifdef GLEXTEMU_EXT_direct_state_access
 	#include "glext-emu/EXT_direct_state_access.h"
@@ -152,6 +279,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Clean up namespace.
 #undef _GLEXTEMU_CMD
+#undef _GLEXTEMU_PUSH_BINDING
 #undef _GLEXTEMU_PFN_PREFIXED
 #undef _GLEXTEMU_PREFIXED
 #undef _GLEXTEMU_CONCAT

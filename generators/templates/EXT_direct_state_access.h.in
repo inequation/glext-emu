@@ -1,0 +1,372 @@
+// THIS IS JUST A TEMPLATE!!!
+// Run ../EXT_direct_state_access.py to regenerate the actual header.
+
+/*
+glext-emu - implementation of EXT_direct_state_access
+
+The MIT License (MIT)
+
+Copyright (c) 2013 Leszek Godlewski
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+#if !__glext_emu_h_
+	#error Please do not include this file directly, define GLEXTEMU_VENDOR_extension_names and include GL/glext-emu.h instead
+#endif
+
+// Save some typing in matrix functions.
+#define _GLEXTEMU_MATRIX_MODE(mode)											\
+	GLEXTEMU_PUSH_MATRIX_MODE(mode)											\
+	_GLEXTEMU_PFN_PREFIXED(MatrixMode)(mode);
+
+// Save some typing in textue functions.
+#define _GLEXTEMU_TEXTURE(texture, target)									\
+	GLEXTEMU_PUSH_TEXTURE(target, texture)									\
+	_GLEXTEMU_PFN_PREFIXED(BindTexture)(target, texture);
+
+// Save some typing in multitexture functions.
+#define _GLEXTEMU_ACTIVE_TEXTURE(texunit)									\
+	GLEXTEMU_PUSH_ACTIVE_TEXTURE(texunit)									\
+	_GLEXTEMU_PFN_PREFIXED(ActiveTexture)(texunit);
+
+// Save some typing in client texture functions.
+#define _GLEXTEMU_CLIENT_ACTIVE_TEXTURE(index)								\
+	GLEXTEMU_PUSH_CLIENT_ACTIVE_TEXTURE(GL_TEXTURE0 + index)				\
+	_GLEXTEMU_PFN_PREFIXED(ClientActiveTexture)(GL_TEXTURE0 + index);
+
+// Save some typing in buffer functions.
+#define _GLEXTEMU_BUFFER(buffer)											\
+	GLEXTEMU_PUSH_BUFFER(buffer)											\
+	_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_ARRAY_BUFFER, buffer);
+
+// Save some typing in program functions.
+#define _GLEXTEMU_PROGRAM(program)											\
+	GLEXTEMU_PUSH_PROGRAM(program)											\
+	_GLEXTEMU_PFN_PREFIXED(UseProgram)(program);
+
+// Save some typing in render buffer functions.
+#define _GLEXTEMU_RENDERBUFFER(renderbuffer)								\
+	GLEXTEMU_PUSH_RENDERBUFFER(renderbuffer)								\
+	_GLEXTEMU_PFN_PREFIXED(BindRenderbuffer)(GL_RENDERBUFFER, renderbuffer);
+
+// Save some typing in frame buffer functions.
+#define _GLEXTEMU_FRAMEBUFFER(framebuffer)									\
+	GLEXTEMU_PUSH_FRAMEBUFFER(framebuffer)									\
+	_GLEXTEMU_PFN_PREFIXED(BindFramebuffer)(GL_FRAMEBUFFER, framebuffer);
+
+// Save some typing in buffer copy functions.
+#define _GLEXTEMU_BUFFER_COPY(readBuffer, writeBuffer)						\
+	GLEXTEMU_PUSH_BUFFER_COPY(readBuffer, writeBuffer)						\
+	_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_COPY_READ_BUFFER, readBuffer);	\
+	_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_COPY_WRITE_BUFFER, writeBuffer);	\
+
+// Save some typing in vertex array object functions.
+#define _GLEXTEMU_VERTEX_ARRAY(vaobj)										\
+	GLEXTEMU_PUSH_VERTEX_ARRAY(vaobj)										\
+	_GLEXTEMU_PFN_PREFIXED(BindVertexArray)(vaobj);
+
+// Save *a lot* of typing for indexed simple state variable gets.
+#define _GLEXTEMU_INDEXED_GET(type, suffix, arg_type)						\
+_GLEXTEMU_CMD(void, Get ## type ## suffix, (GLenum target, GLuint index, arg_type data),	\
+{																			\
+	switch (target)															\
+	{																		\
+		case GL_PROGRAM_MATRIX_EXT:											\
+		case GL_TRANSPOSE_PROGRAM_MATRIX_EXT:								\
+		case GL_PROGRAM_MATRIX_STACK_DEPTH_EXT:								\
+			{																\
+				_GLEXTEMU_MATRIX_MODE(GL_MATRIX0_ARB + index)				\
+				GLenum t;													\
+				switch (target)												\
+				{															\
+					case GL_PROGRAM_MATRIX_EXT:								\
+						t = GL_CURRENT_MATRIX_ARB;	break;					\
+					case GL_TRANSPOSE_PROGRAM_MATRIX_EXT:					\
+						t = GL_TRANSPOSE_CURRENT_MATRIX_ARB;	break;		\
+					case GL_PROGRAM_MATRIX_STACK_DEPTH_EXT:					\
+						t = GL_CURRENT_MATRIX_STACK_DEPTH_ARB;	break;		\
+				}															\
+				_GLEXTEMU_PFN_PREFIXED(Get ## type ## v)(t, data);			\
+			}																\
+			break;															\
+		case GL_CURRENT_MATRIX_NV:											\
+		case GL_CURRENT_MATRIX_STACK_DEPTH_NV:								\
+		case GL_CURRENT_RASTER_TEXTURE_COORDS:								\
+		case GL_CURRENT_TEXTURE_COORDS:										\
+		case GL_TEXTURE_BINDING_1D:											\
+		case GL_TEXTURE_BINDING_1D_ARRAY:									\
+		case GL_TEXTURE_BINDING_2D:											\
+		case GL_TEXTURE_BINDING_2D_ARRAY:									\
+		case GL_TEXTURE_BINDING_3D:											\
+		case GL_TEXTURE_BINDING_BUFFER_EXT:									\
+		case GL_TEXTURE_BINDING_CUBE_MAP:									\
+		case GL_TEXTURE_BINDING_CUBE_MAP_ARRAY_ARB:							\
+		case GL_TEXTURE_BINDING_RECTANGLE_ARB:								\
+		case GL_TEXTURE_BINDING_RENDERBUFFER_NV:							\
+		case GL_TEXTURE_RENDERBUFFER_DATA_STORE_BINDING_NV:					\
+		case GL_TEXTURE_BUFFER_DATA_STORE_BINDING_EXT:						\
+		case GL_TEXTURE_BUFFER_FORMAT_EXT:									\
+		case GL_TEXTURE_GEN_Q:												\
+		case GL_TEXTURE_GEN_R:												\
+		case GL_TEXTURE_GEN_S:												\
+		case GL_TEXTURE_GEN_T:												\
+		case GL_TEXTURE_MATRIX:												\
+		case GL_TEXTURE_STACK_DEPTH:										\
+		case GL_TRANSPOSE_TEXTURE_MATRIX:									\
+		case GL_TEXTURE_1D:													\
+		case GL_TEXTURE_2D:													\
+		case GL_TEXTURE_3D:													\
+		case GL_TEXTURE_CUBE_MAP:											\
+		case GL_TEXTURE_RECTANGLE_ARB:										\
+			{																\
+				_GLEXTEMU_ACTIVE_TEXTURE(GL_TEXTURE0 + index)						\
+				_GLEXTEMU_PFN_PREFIXED(Get ## type ## v)(target, data);		\
+			}																\
+			break;															\
+		case GL_TEXTURE_COORD_ARRAY:										\
+		case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING:							\
+		case GL_TEXTURE_COORD_ARRAY_COUNT_EXT:								\
+		case GL_TEXTURE_COORD_ARRAY_SIZE:									\
+		case GL_TEXTURE_COORD_ARRAY_STRIDE:									\
+		case GL_TEXTURE_COORD_ARRAY_TYPE:									\
+			{																\
+				_GLEXTEMU_CLIENT_ACTIVE_TEXTURE(GL_TEXTURE0 + index)		\
+				_GLEXTEMU_PFN_PREFIXED(Get ## type ## v)(target, data);		\
+			}																\
+			break;															\
+		default:															\
+			_GLEXTEMU_RAISE_INVALID_ENUM									\
+			break;															\
+	}																		\
+}																			\
+)
+
+// Save *a lot* of typing for indexed simple state variable gets.
+#define _GLEXTEMU_INDEXED_ISENABLED(suffix)									\
+_GLEXTEMU_CMD(GLboolean, IsEnabled ## suffix, (GLenum target, GLuint index),\
+{																			\
+	switch (target)															\
+	{																		\
+		case GL_TEXTURE_1D:													\
+		case GL_TEXTURE_2D:													\
+		case GL_TEXTURE_3D:													\
+		case GL_TEXTURE_CUBE_MAP:											\
+		case GL_TEXTURE_RECTANGLE_ARB:										\
+		case GL_TEXTURE_GEN_S:												\
+		case GL_TEXTURE_GEN_T:												\
+		case GL_TEXTURE_GEN_R:												\
+		case GL_TEXTURE_GEN_Q:												\
+			{																\
+				_GLEXTEMU_ACTIVE_TEXTURE(GL_TEXTURE0 + index)				\
+				return _GLEXTEMU_PFN_PREFIXED(IsEnabled)(target);			\
+			}																\
+		case GL_TEXTURE_COORD_ARRAY:										\
+			{																\
+				_GLEXTEMU_CLIENT_ACTIVE_TEXTURE(GL_TEXTURE0 + index)		\
+				return _GLEXTEMU_PFN_PREFIXED(IsEnabled)(target);			\
+			}																\
+			break;															\
+		default:															\
+			_GLEXTEMU_RAISE_INVALID_ENUM									\
+			break;															\
+	}																		\
+	return GL_FALSE;														\
+}																			\
+)
+
+// FIXME: hack for GLEW
+#ifndef GL_COPY_READ_BUFFER_BINDING
+	#define GL_COPY_READ_BUFFER_BINDING 0x8F36
+#endif
+#ifndef GL_COPY_WRITE_BUFFER_BINDING
+	#define GL_COPY_WRITE_BUFFER_BINDING 0x8F37
+#endif
+
+_GLEXTEMU_CMD
+(
+void, ClientAttribDefaultEXT, (GLbitfield mask),
+{
+	if (mask & GL_CLIENT_PIXEL_STORE_BIT)
+	{
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_UNPACK_SWAP_BYTES, GL_FALSE);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_UNPACK_LSB_FIRST, GL_FALSE);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_UNPACK_IMAGE_HEIGHT, 0);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_UNPACK_SKIP_IMAGES, 0);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_UNPACK_ROW_LENGTH, 0);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_UNPACK_SKIP_ROWS, 0);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_UNPACK_SKIP_PIXELS, 0);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_UNPACK_ALIGNMENT, 4);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_PACK_SWAP_BYTES, GL_FALSE);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_PACK_LSB_FIRST, GL_FALSE);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_PACK_IMAGE_HEIGHT, 0);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_PACK_SKIP_IMAGES, 0);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_PACK_ROW_LENGTH, 0);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_PACK_SKIP_ROWS, 0);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_PACK_SKIP_PIXELS, 0);
+		_GLEXTEMU_PFN_PREFIXED(PixelStorei)(GL_PACK_ALIGNMENT, 4);
+
+		_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_PIXEL_UNPACK_BUFFER, 0);
+		_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_PIXEL_PACK_BUFFER, 0);
+	}
+	
+	if (mask & GL_CLIENT_VERTEX_ARRAY_BIT)
+	{
+		int i;
+		GLint max;
+
+		_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_ARRAY_BUFFER, 0);
+		_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+		//_GLEXTEMU_PFN_PREFIXED(DisableClientState)(GL_EDGE_FLAG_ARRAY);
+		//_GLEXTEMU_PFN_PREFIXED(EdgePointer)(0, 0);
+
+		_GLEXTEMU_PFN_PREFIXED(DisableClientState)(GL_INDEX_ARRAY);
+		_GLEXTEMU_PFN_PREFIXED(IndexPointer)(GL_FLOAT, 0, 0);
+
+		_GLEXTEMU_PFN_PREFIXED(DisableClientState)(GL_SECONDARY_COLOR_ARRAY);
+		_GLEXTEMU_PFN_PREFIXED(SecondaryColorPointer)(4, GL_FLOAT, 0, 0);
+
+		_GLEXTEMU_PFN_PREFIXED(DisableClientState)(GL_FOG_COORD_ARRAY);
+		_GLEXTEMU_PFN_PREFIXED(FogCoordPointer)(GL_FLOAT, 0, 0);
+
+		_GLEXTEMU_PFN_PREFIXED(GetIntegerv)(GL_MAX_TEXTURE_COORDS, &max);
+		for (i=0; i<max; i++) {
+			_GLEXTEMU_PFN_PREFIXED(ClientActiveTexture)(GL_TEXTURE0 + i);
+			_GLEXTEMU_PFN_PREFIXED(DisableClientState)(GL_TEXTURE_COORD_ARRAY);
+			_GLEXTEMU_PFN_PREFIXED(TexCoordPointer)(4, GL_FLOAT, 0, 0);
+		}
+
+		_GLEXTEMU_PFN_PREFIXED(DisableClientState)(GL_COLOR_ARRAY);
+		_GLEXTEMU_PFN_PREFIXED(ColorPointer)(4, GL_FLOAT, 0, 0);
+
+		_GLEXTEMU_PFN_PREFIXED(DisableClientState)(GL_NORMAL_ARRAY);
+		_GLEXTEMU_PFN_PREFIXED(NormalPointer)(GL_FLOAT, 0, 0);
+
+		_GLEXTEMU_PFN_PREFIXED(DisableClientState)(GL_VERTEX_ARRAY);
+		_GLEXTEMU_PFN_PREFIXED(VertexPointer)(4, GL_FLOAT, 0, 0);
+
+		_GLEXTEMU_PFN_PREFIXED(DisableClientState)(GL_WEIGHT_ARRAY_ARB);
+		_GLEXTEMU_PFN_PREFIXED(WeightPointerARB)(0, GL_FLOAT, 0, 0);
+
+		_GLEXTEMU_PFN_PREFIXED(GetIntegerv)(GL_MAX_VERTEX_ATTRIBS, &max);
+		for (i=0; i<max; i++) {
+			_GLEXTEMU_PFN_PREFIXED(DisableVertexAttribArray)(i);
+			_GLEXTEMU_PFN_PREFIXED(VertexAttribPointer)(i, 4, GL_FLOAT, GL_FALSE, 0, 0);
+		}
+
+		_GLEXTEMU_PFN_PREFIXED(ClientActiveTexture)(GL_TEXTURE0);
+	}
+}
+)
+
+_GLEXTEMU_CMD
+(
+void, PushClientAttribDefaultEXT, (GLbitfield mask),
+{
+	_GLEXTEMU_PFN_PREFIXED(PushClientAttrib)(mask);
+	_GLEXTEMU_PREFIXED(ClientAttribDefaultEXT)(mask);
+}
+)
+
+_GLEXTEMU_CMD
+(
+void, EnableClientStateIndexedEXT, (GLenum array, GLuint index),
+{
+	if (array == GL_TEXTURE_COORD_ARRAY)
+	{
+		_GLEXTEMU_CLIENT_ACTIVE_TEXTURE(index)
+		_GLEXTEMU_PFN_PREFIXED(EnableClientState)(array);
+		GLEXTEMU_POP_CLIENT_ACTIVE_TEXTURE
+	}
+	else
+	{
+		_GLEXTEMU_RAISE_INVALID_ENUM
+	}
+}
+)
+
+_GLEXTEMU_CMD
+(
+void, DisableClientStateIndexedEXT, (GLenum array, GLuint index),
+{
+	if (array == GL_TEXTURE_COORD_ARRAY)
+	{
+		_GLEXTEMU_CLIENT_ACTIVE_TEXTURE(index)
+		_GLEXTEMU_PFN_PREFIXED(DisableClientState)(array);
+		GLEXTEMU_POP_CLIENT_ACTIVE_TEXTURE
+	}
+	else
+	{
+		_GLEXTEMU_RAISE_INVALID_ENUM
+	}
+}
+)
+
+_GLEXTEMU_CMD
+(
+void, EnableClientStateiEXT, (GLenum array, GLuint index),
+{
+	_GLEXTEMU_PREFIXED(EnableClientStateIndexedEXT)(array, index);
+}
+)
+
+_GLEXTEMU_CMD
+(
+void, DisableClientStateiEXT, (GLenum array, GLuint index),
+{
+	_GLEXTEMU_PREFIXED(DisableClientStateIndexedEXT)(array, index);
+}
+)
+
+_GLEXTEMU_CMD
+(
+void, GetFramebufferParameterivEXT, (GLuint framebuffer, GLenum pname, GLint* params),
+{
+	_GLEXTEMU_FRAMEBUFFER(framebuffer)
+	_GLEXTEMU_PFN_PREFIXED(GetFramebufferParameteriv)(GL_FRAMEBUFFER, pname, params);
+	GLEXTEMU_POP_FRAMEBUFFER
+}
+)
+
+_GLEXTEMU_INDEXED_GET(Boolean, IndexedvEXT, GLboolean *)
+_GLEXTEMU_INDEXED_GET(Integer, IndexedvEXT, GLint *)
+_GLEXTEMU_INDEXED_GET(Float, IndexedvEXT, GLfloat *)
+_GLEXTEMU_INDEXED_GET(Double, IndexedvEXT, GLdouble *)
+_GLEXTEMU_INDEXED_GET(Pointer, IndexedvEXT, GLvoid **)
+_GLEXTEMU_INDEXED_GET(Boolean, i_v, GLboolean *)
+_GLEXTEMU_INDEXED_GET(Integer, i_v, GLint *)
+_GLEXTEMU_INDEXED_GET(Float, i_vEXT, GLfloat *)
+_GLEXTEMU_INDEXED_GET(Double, i_vEXT, GLdouble *)
+_GLEXTEMU_INDEXED_GET(Pointer, i_vEXT, GLvoid **)
+// FIXME!!! forward calls to regular glIsEnabledi()
+_GLEXTEMU_INDEXED_ISENABLED(i)
+_GLEXTEMU_INDEXED_ISENABLED(IndexedEXT)
+
+//Auto-generated implementation goes here.
+
+GLEXTEMU_AUTOGEN
+
+// Clean up namespace.
+#undef _GLEXTEMU_INDEXED_ISENABLED
+#undef _GLEXTEMU_INDEXED_GET
+#undef _GLEXTEMU_BUFFER
+#undef _GLEXTEMU_CLIENT_ACTIVE_TEXTURE
+#undef _GLEXTEMU_TEXTURE
+#undef _GLEXTEMU_ACTIVE_TEXTURE
+#undef _GLEXTEMU_MATRIX_MODE
