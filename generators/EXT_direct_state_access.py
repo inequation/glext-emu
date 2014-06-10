@@ -168,7 +168,7 @@ def get_indirect_info(proto):
 		info['command'] = classic
 		info['args'] = proto['args'][(classic.startswith('Check') and 0 or 1):]
 		if ('Texture' in classic or 'Renderbuffer' in classic	\
-			or 'AttachmentParameter' in classic):
+			or 'AttachmentParameter' in classic or 'Parameter' in classic):
 			info['args'].insert(0, {'type': 'GLenum', 'name': 'GL_FRAMEBUFFER'})
 	elif (proto['command'].startswith('GenerateTexture')):
 		# work out the classic command name
