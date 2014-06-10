@@ -632,7 +632,8 @@ registry = [
 	'GL_VERSION_4_0',
 	'GL_VERSION_4_1',
 	'GL_VERSION_4_2',
-	'GL_VERSION_4_3'
+	'GL_VERSION_4_3',
+	'GL_VERSION_4_4'
 ]
 
 # Calls C preprocessor on glext.h, filtering all extensions but the requested

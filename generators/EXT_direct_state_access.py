@@ -116,7 +116,8 @@ def get_indirect_info(proto):
 	elif (proto['command'].startswith('NamedBuffer')
 	   or proto['command'].startswith('MapNamedBuffer')
 	   or proto['command'].startswith('UnmapNamedBuffer')
-	   or proto['command'].startswith('GetNamedBuffer')):
+	   or proto['command'].startswith('GetNamedBuffer')
+	   or proto['command'].startswith('ClearNamedBuffer')):
 		# work out the classic command name
 		classic = proto['command'][:-3].replace('Named', '', 1)
 		
