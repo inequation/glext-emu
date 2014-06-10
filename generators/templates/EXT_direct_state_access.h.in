@@ -31,55 +31,75 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 // Save some typing in matrix functions.
-#define _GLEXTEMU_MATRIX_MODE(mode)											\
-	GLEXTEMU_PUSH_MATRIX_MODE(mode)											\
-	_GLEXTEMU_PFN_PREFIXED(MatrixMode)(mode);
+#ifndef _GLEXTEMU_MATRIX_MODE
+	#define _GLEXTEMU_MATRIX_MODE(mode)										\
+		GLEXTEMU_PUSH_MATRIX_MODE(mode)										\
+		_GLEXTEMU_PFN_PREFIXED(MatrixMode)(mode);
+#endif
 
 // Save some typing in textue functions.
-#define _GLEXTEMU_TEXTURE(texture, target)									\
-	GLEXTEMU_PUSH_TEXTURE(target, texture)									\
-	_GLEXTEMU_PFN_PREFIXED(BindTexture)(target, texture);
+#ifndef _GLEXTEMU_TEXTURE
+	#define _GLEXTEMU_TEXTURE(texture, target)								\
+		GLEXTEMU_PUSH_TEXTURE(target, texture)								\
+		_GLEXTEMU_PFN_PREFIXED(BindTexture)(target, texture);
+#endif
 
 // Save some typing in multitexture functions.
-#define _GLEXTEMU_ACTIVE_TEXTURE(texunit)									\
-	GLEXTEMU_PUSH_ACTIVE_TEXTURE(texunit)									\
-	_GLEXTEMU_PFN_PREFIXED(ActiveTexture)(texunit);
+#ifndef _GLEXTEMU_ACTIVE_TEXTURE
+	#define _GLEXTEMU_ACTIVE_TEXTURE(texunit)								\
+		GLEXTEMU_PUSH_ACTIVE_TEXTURE(texunit)								\
+		_GLEXTEMU_PFN_PREFIXED(ActiveTexture)(texunit);
+#endif
 
 // Save some typing in client texture functions.
-#define _GLEXTEMU_CLIENT_ACTIVE_TEXTURE(index)								\
-	GLEXTEMU_PUSH_CLIENT_ACTIVE_TEXTURE(GL_TEXTURE0 + index)				\
-	_GLEXTEMU_PFN_PREFIXED(ClientActiveTexture)(GL_TEXTURE0 + index);
+#ifndef _GLEXTEMU_CLIENT_ACTIVE_TEXTURE
+	#define _GLEXTEMU_CLIENT_ACTIVE_TEXTURE(index)							\
+		GLEXTEMU_PUSH_CLIENT_ACTIVE_TEXTURE(GL_TEXTURE0 + index)			\
+		_GLEXTEMU_PFN_PREFIXED(ClientActiveTexture)(GL_TEXTURE0 + index);
+#endif
 
 // Save some typing in buffer functions.
-#define _GLEXTEMU_BUFFER(buffer)											\
-	GLEXTEMU_PUSH_BUFFER(buffer)											\
-	_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_ARRAY_BUFFER, buffer);
+#ifndef _GLEXTEMU_BUFFER
+	#define _GLEXTEMU_BUFFER(buffer)										\
+		GLEXTEMU_PUSH_BUFFER(buffer)										\
+		_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_ARRAY_BUFFER, buffer);
+#endif
 
 // Save some typing in program functions.
-#define _GLEXTEMU_PROGRAM(program)											\
-	GLEXTEMU_PUSH_PROGRAM(program)											\
-	_GLEXTEMU_PFN_PREFIXED(UseProgram)(program);
+#ifndef _GLEXTEMU_PROGRAM
+	#define _GLEXTEMU_PROGRAM(program)										\
+		GLEXTEMU_PUSH_PROGRAM(program)										\
+		_GLEXTEMU_PFN_PREFIXED(UseProgram)(program);
+#endif
 
 // Save some typing in render buffer functions.
-#define _GLEXTEMU_RENDERBUFFER(renderbuffer)								\
-	GLEXTEMU_PUSH_RENDERBUFFER(renderbuffer)								\
-	_GLEXTEMU_PFN_PREFIXED(BindRenderbuffer)(GL_RENDERBUFFER, renderbuffer);
+#ifndef _GLEXTEMU_RENDERBUFFER
+	#define _GLEXTEMU_RENDERBUFFER(renderbuffer)							\
+		GLEXTEMU_PUSH_RENDERBUFFER(renderbuffer)							\
+		_GLEXTEMU_PFN_PREFIXED(BindRenderbuffer)(GL_RENDERBUFFER, renderbuffer);
+#endif
 
 // Save some typing in frame buffer functions.
-#define _GLEXTEMU_FRAMEBUFFER(framebuffer)									\
-	GLEXTEMU_PUSH_FRAMEBUFFER(framebuffer)									\
-	_GLEXTEMU_PFN_PREFIXED(BindFramebuffer)(GL_FRAMEBUFFER, framebuffer);
+#ifndef _GLEXTEMU_FRAMEBUFFER
+	#define _GLEXTEMU_FRAMEBUFFER(framebuffer)								\
+		GLEXTEMU_PUSH_FRAMEBUFFER(framebuffer)								\
+		_GLEXTEMU_PFN_PREFIXED(BindFramebuffer)(GL_FRAMEBUFFER, framebuffer);
+#endif
 
 // Save some typing in buffer copy functions.
-#define _GLEXTEMU_BUFFER_COPY(readBuffer, writeBuffer)						\
-	GLEXTEMU_PUSH_BUFFER_COPY(readBuffer, writeBuffer)						\
-	_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_COPY_READ_BUFFER, readBuffer);	\
-	_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_COPY_WRITE_BUFFER, writeBuffer);	\
+#ifndef _GLEXTEMU_BUFFER_COPY
+	#define _GLEXTEMU_BUFFER_COPY(readBuffer, writeBuffer)					\
+		GLEXTEMU_PUSH_BUFFER_COPY(readBuffer, writeBuffer)					\
+		_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_COPY_READ_BUFFER, readBuffer);\
+		_GLEXTEMU_PFN_PREFIXED(BindBuffer)(GL_COPY_WRITE_BUFFER, writeBuffer);
+#endif
 
 // Save some typing in vertex array object functions.
-#define _GLEXTEMU_VERTEX_ARRAY(vaobj)										\
-	GLEXTEMU_PUSH_VERTEX_ARRAY(vaobj)										\
+#ifndef _GLEXTEMU_VERTEX_ARRAY
+	#define _GLEXTEMU_VERTEX_ARRAY(vaobj)									\
+		GLEXTEMU_PUSH_VERTEX_ARRAY(vaobj)									\
 	_GLEXTEMU_PFN_PREFIXED(BindVertexArray)(vaobj);
+#endif
 
 // Save *a lot* of typing for indexed simple state variable gets.
 #define _GLEXTEMU_INDEXED_GET(type, suffix, arg_type)						\
